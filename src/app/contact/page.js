@@ -39,13 +39,23 @@ export default function ContactPage() {
           </a>
         </div>
 
-        <div className="bg-charcoal text-ivory rounded-2xl p-8">
+        <div className="bg-charcoal text-ivory rounded-2xl p-8 mb-8">
           <p className="font-script text-xl mb-2">Visit the Clinic</p>
           <p className="text-ivory/70 text-sm leading-relaxed">
             33 Okugade Okunneye Street,
             <br />
             Mende, Maryland, Lagos 105102
           </p>
+        </div>
+
+        <div className="rounded-2xl overflow-hidden border border-nude">
+          <iframe
+            src="https://www.google.com/maps?q=33+Okugade+Okunneye+Street+Mende+Maryland+Lagos&output=embed"
+            title="Soothe Aesthetics Clinic location"
+            className="w-full"
+            style={{ height: "350px", border: "none" }}
+            loading="lazy"
+          />
         </div>
 
         <div className="mt-14">

@@ -22,17 +22,16 @@ export default function AboutPage() {
         <div className="grid md:grid-cols-2 gap-14 items-center mb-24">
           <div className="relative aspect-square rounded-3xl bg-nude overflow-hidden">
             <div className="absolute inset-0 flex items-center justify-center text-charcoal/30 text-sm text-center px-6">
-              Dr Semilore's photo goes here
+              Dr Semi's photo 
             </div>
           </div>
           <div>
             <h2 className="font-script text-3xl text-charcoal mb-4">
-              Meet Dr Semilore
+              Meet Dr Semi
             </h2>
             <p className="text-charcoal/70 leading-relaxed mb-4">
-              [Bio placeholder — credentials, qualifications, years of
-              experience, and philosophy on skincare go here once provided by
-              the client.]
+              [credentials, qualifications, years of
+              experience, and philosophy on skincare and aesthetics.]
             </p>
             <p className="text-charcoal/70 leading-relaxed">
               Every treatment at Soothe begins with a thorough consultation,
