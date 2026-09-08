@@ -91,7 +91,7 @@ export default function Header() {
       {/* Main nav */}
       <div className="max-w-7xl mx-auto px-4 md:px-6 py-4 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-2">
-          <Image src="/logo.png" alt="Soothe Aesthetics Clinic" width={44} height={44} />
+          <Image src="/logoo.jpeg" alt="Soothe Aesthetics Clinic" width={44} height={44} />
           <span className="font-serif text-xl text-[#29252A]">Soothe</span>
         </Link>
 
