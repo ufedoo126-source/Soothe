@@ -59,23 +59,16 @@ export default function Header() {
           {/* Social icons pill */}
           <div className="hidden md:flex items-center gap-2 bg-white rounded-full px-3 py-1.5">
             <a
-              href="#"
-              aria-label="Instagram"
-              className="text-[#29252A] hover:text-[#C96F99] transition"
-            >
+             href="https://www.instagram.com/sootheaestheticss/"
+             target="_blank"
+             rel="noopener noreferrer"
+             aria-label="Instagram"
+             className="text-[#29252A] hover:text-[#C96F99] transition">
+            
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
                 <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
                 <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" />
-              </svg>
-            </a>
-            <a
-              href="#"
-              aria-label="TikTok"
-              className="text-[#29252A] hover:text-[#C96F99] transition"
-            >
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M16.6 5.82s.51.5 0 0A4.278 4.278 0 0 1 15.54 3h-3.09v12.4a2.592 2.592 0 0 1-2.59 2.5c-1.42 0-2.6-1.16-2.6-2.6 0-1.72 1.66-3.01 3.37-2.48V9.66c-3.45-.46-6.47 2.22-6.47 5.64 0 3.33 2.76 5.7 5.69 5.7 3.14 0 5.69-2.55 5.69-5.7V9.01a7.35 7.35 0 0 0 4.3 1.38V7.3s-1.88.09-3.24-1.48z" />
               </svg>
             </a>
             <a
