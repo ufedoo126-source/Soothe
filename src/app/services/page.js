@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { SERVICE_CATEGORIES, slugify } from "@/lib/services";
 
@@ -26,6 +27,16 @@ export default function ServicesPage() {
         <div className="space-y-16">
           {SERVICE_CATEGORIES.map((category) => (
             <div key={category.name}>
+              {category.image && (
+                <div className="relative w-full h-56 md:h-72 rounded-2xl overflow-hidden mb-6">
+                  <Image
+                    src={category.image}
+                    alt={category.name}
+                    fill
+                    className="object-cover"
+                  />
+                </div>
+              )}
               <h2 className="font-script text-2xl text-rose mb-6 pb-3 border-b border-champagne/40">
                 {category.name}
               </h2>

@@ -1,6 +1,7 @@
 export const SERVICE_CATEGORIES = [
   {
     name: "Consultation",
+    image: "/services/consultation.jpg",
     items: [
       {
         name: "Physical Consultation",
@@ -27,6 +28,7 @@ export const SERVICE_CATEGORIES = [
   },
   {
     name: "Facials",
+    image: "/services/facials.jpg",
     items: [
       {
         name: "Custom Facial",
@@ -53,6 +55,7 @@ export const SERVICE_CATEGORIES = [
   },
   {
     name: "Treatment Plans",
+    image: "/services/treatment-plans.jpg",
     items: [
       {
         name: "Acne Treatment Plan (Single)",
@@ -114,6 +117,7 @@ export const SERVICE_CATEGORIES = [
   },
   {
     name: "Waxing",
+    image: "/services/waxing.jpg",
     items: [
       { name: "Stomach (Snail Tail)", duration: "10 mins", price: "₦5,000" },
       { name: "Upper Lip", duration: "5 mins", price: "₦5,000" },
@@ -130,6 +134,7 @@ export const SERVICE_CATEGORIES = [
   },
   {
     name: "Microneedling",
+    image: "/services/microneedling.jpg",
     items: [
       {
         name: "Microneedling for Acne Scars",
@@ -177,6 +182,7 @@ export const SERVICE_CATEGORIES = [
   },
   {
     name: "Chemical Peels",
+    image: "/services/chemical-peels.jpg",
     items: [
       {
         name: "Periocular/Eye Peel",
