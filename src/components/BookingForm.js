@@ -4,7 +4,11 @@ import { useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { getServiceBySlug, priceToNumber } from "@/lib/services";
-import BookingPayButton from "./BookingPayButton";
+import dynamic from "next/dynamic";
+
+const BookingPayButton = dynamic(() => import("./BookingPayButton"), {
+  ssr: false,
+});
 
 const CLINIC_WHATSAPP = "2349114624762";
 
@@ -16,7 +20,7 @@ export default function BookingForm() {
   const [paymentType, setPaymentType] = useState("full");
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
-  const [paid, setPaid] = useState(false);
+  const [status, setStatus] = useState("idle"); // idle | verifying | verified | failed
 
   if (!service) {
     return (
@@ -36,21 +40,40 @@ export default function BookingForm() {
   }
 
   const fullPrice = priceToNumber(service.price);
-  const amount = paymentType === "deposit" ? Math.round(fullPrice * 0.5) : fullPrice;
+  const amount =
+    paymentType === "deposit" ? Math.round(fullPrice * 0.5) : fullPrice;
   const canPay = name.trim().length > 0 && phone.trim().length >= 10;
 
-  function handlePaySuccess(reference) {
-    setPaid(true);
+  async function handlePaySuccess(reference) {
+    setStatus("verifying");
 
-    const message = encodeURIComponent(
-      `Hi Dr Semilore, I just paid ₦${amount.toLocaleString()} (${
-        paymentType === "deposit" ? "50% deposit" : "full payment"
-      }) for ${service.name}. My name is ${name}, phone ${phone}. Payment ref: ${
-        reference.reference
-      }. Can we fix a date and time?`
-    );
+    try {
+      const res = await fetch("/api/verify-payment", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reference: reference.reference }),
+      });
+      const data = await res.json();
 
-    window.location.href = `https://wa.me/${CLINIC_WHATSAPP}?text=${message}`;
+      if (!data.verified) {
+        setStatus("failed");
+        return;
+      }
+
+      setStatus("verified");
+
+      const message = encodeURIComponent(
+        `Hi Dr Semilore, I just paid ₦${amount.toLocaleString()} (${
+          paymentType === "deposit" ? "50% deposit" : "full payment"
+        }) for ${service.name}. My name is ${name}, phone ${phone}. Payment ref: ${
+          reference.reference
+        }. Can we fix a date and time?`
+      );
+
+      window.location.href = `https://wa.me/${CLINIC_WHATSAPP}?text=${message}`;
+    } catch (err) {
+      setStatus("failed");
+    }
   }
 
   return (
@@ -134,9 +157,22 @@ export default function BookingForm() {
         </button>
       )}
 
-      {paid && (
+      {status === "verifying" && (
         <p className="text-center text-sm text-charcoal/60 mt-4">
-          Redirecting you to WhatsApp...
+          Confirming your payment...
+        </p>
+      )}
+
+      {status === "failed" && (
+        <p className="text-center text-sm text-red-500 mt-4">
+          We couldn't confirm this payment. If you were charged, please
+          contact us on WhatsApp directly with your payment reference.
+        </p>
+      )}
+
+      {status === "verified" && (
+        <p className="text-center text-sm text-charcoal/60 mt-4">
+          Payment confirmed — redirecting you to WhatsApp...
         </p>
       )}
     </div>

@@ -262,3 +262,6 @@ export function getServiceBySlug(slug) {
 export function priceToNumber(priceString) {
   return Number(priceString.replace(/[₦,]/g, ""));
 }
+export function getCategoryBySlug(slug) {
+  return SERVICE_CATEGORIES.find((category) => slugify(category.name) === slug);
+}
