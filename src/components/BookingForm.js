@@ -3,8 +3,8 @@
 import { useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { getServiceBySlug, priceToNumber } from "@/lib/services";
 import dynamic from "next/dynamic";
+import { getServiceBySlug, priceToNumber } from "@/lib/services";
 
 const BookingPayButton = dynamic(() => import("./BookingPayButton"), {
   ssr: false,
@@ -20,6 +20,7 @@ export default function BookingForm() {
   const [paymentType, setPaymentType] = useState("full");
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
   const [status, setStatus] = useState("idle"); // idle | verifying | verified | failed
 
   if (!service) {
@@ -42,7 +43,10 @@ export default function BookingForm() {
   const fullPrice = priceToNumber(service.price);
   const amount =
     paymentType === "deposit" ? Math.round(fullPrice * 0.5) : fullPrice;
-  const canPay = name.trim().length > 0 && phone.trim().length >= 10;
+  const canPay =
+    name.trim().length > 0 &&
+    phone.trim().length >= 10 &&
+    /^\S+@\S+\.\S+$/.test(email.trim());
 
   async function handlePaySuccess(reference) {
     setStatus("verifying");
@@ -51,7 +55,15 @@ export default function BookingForm() {
       const res = await fetch("/api/verify-payment", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ reference: reference.reference }),
+        body: JSON.stringify({
+          reference: reference.reference,
+          email,
+          name,
+          phone,
+          serviceName: service.name,
+          amount,
+          paymentType,
+        }),
       });
       const data = await res.json();
 
@@ -128,6 +140,18 @@ export default function BookingForm() {
         </div>
         <div>
           <label className="block text-sm text-charcoal/70 mb-1">
+            Email Address
+          </label>
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="w-full border border-nude rounded-lg px-4 py-2.5 text-charcoal"
+            placeholder="you@example.com"
+          />
+        </div>
+        <div>
+          <label className="block text-sm text-charcoal/70 mb-1">
             WhatsApp Number
           </label>
           <input
@@ -143,7 +167,7 @@ export default function BookingForm() {
       {canPay ? (
         <BookingPayButton
           amount={amount}
-          phone={phone}
+          email={email}
           name={name}
           onSuccess={handlePaySuccess}
         />
@@ -153,7 +177,7 @@ export default function BookingForm() {
           disabled
           className="w-full bg-nude text-charcoal/40 font-medium py-3 rounded-lg cursor-not-allowed"
         >
-          Enter your name and number to continue
+          Fill in your name, email, and number to continue
         </button>
       )}
 

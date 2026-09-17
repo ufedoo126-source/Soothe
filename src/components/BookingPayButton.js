@@ -2,10 +2,10 @@
 
 import { usePaystackPayment } from "react-paystack";
 
-export default function BookingPayButton({ amount, phone, name, onSuccess }) {
+export default function BookingPayButton({ amount, email, name, onSuccess }) {
   const config = {
     reference: `soothe_${Date.now()}`,
-    email: `${phone}@soothe-guest.com`,
+    email: email,
     amount: amount * 100, // Paystack expects kobo
     publicKey: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY,
   };
