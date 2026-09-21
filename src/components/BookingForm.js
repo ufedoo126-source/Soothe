@@ -1,16 +1,40 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { getServiceBySlug, priceToNumber } from "@/lib/services";
+import { supabase } from "@/lib/supabaseClient";
 
 const BookingPayButton = dynamic(() => import("./BookingPayButton"), {
   ssr: false,
 });
 
 const CLINIC_WHATSAPP = "2349114624762";
+
+const TIME_SLOTS = [
+  "9:00 AM",
+  "10:00 AM",
+  "11:00 AM",
+  "12:00 PM",
+  "1:00 PM",
+  "2:00 PM",
+  "3:00 PM",
+  "4:00 PM",
+  "5:00 PM",
+];
+
+function getTodayString() {
+  const today = new Date();
+  return today.toISOString().split("T")[0];
+}
+
+function isSunday(dateString) {
+  if (!dateString) return false;
+  const date = new Date(dateString + "T00:00:00");
+  return date.getDay() === 0;
+}
 
 export default function BookingForm() {
   const searchParams = useSearchParams();
@@ -21,7 +45,34 @@ export default function BookingForm() {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
+  const [selectedDate, setSelectedDate] = useState("");
+  const [selectedTime, setSelectedTime] = useState("");
+  const [bookedSlots, setBookedSlots] = useState([]);
+  const [loadingSlots, setLoadingSlots] = useState(false);
   const [status, setStatus] = useState("idle"); // idle | verifying | verified | failed
+
+  useEffect(() => {
+    if (!selectedDate || isSunday(selectedDate)) {
+      setBookedSlots([]);
+      return;
+    }
+
+    async function fetchBookedSlots() {
+      setLoadingSlots(true);
+      setSelectedTime("");
+      const { data, error } = await supabase
+        .from("available_slots")
+        .select("appointment_time")
+        .eq("appointment_date", selectedDate);
+
+      if (!error && data) {
+        setBookedSlots(data.map((row) => row.appointment_time));
+      }
+      setLoadingSlots(false);
+    }
+
+    fetchBookedSlots();
+  }, [selectedDate]);
 
   if (!service) {
     return (
@@ -46,7 +97,10 @@ export default function BookingForm() {
   const canPay =
     name.trim().length > 0 &&
     phone.trim().length >= 10 &&
-    /^\S+@\S+\.\S+$/.test(email.trim());
+    /^\S+@\S+\.\S+$/.test(email.trim()) &&
+    selectedDate &&
+    selectedTime &&
+    !isSunday(selectedDate);
 
   async function handlePaySuccess(reference) {
     setStatus("verifying");
@@ -61,8 +115,11 @@ export default function BookingForm() {
           name,
           phone,
           serviceName: service.name,
+          fullPrice,
           amount,
           paymentType,
+          appointmentDate: selectedDate,
+          appointmentTime: selectedTime,
         }),
       });
       const data = await res.json();
@@ -77,9 +134,9 @@ export default function BookingForm() {
       const message = encodeURIComponent(
         `Hi Dr Semilore, I just paid ₦${amount.toLocaleString()} (${
           paymentType === "deposit" ? "50% deposit" : "full payment"
-        }) for ${service.name}. My name is ${name}, phone ${phone}. Payment ref: ${
+        }) for ${service.name} on ${selectedDate} at ${selectedTime}. My name is ${name}, phone ${phone}. Payment ref: ${
           reference.reference
-        }. Can we fix a date and time?`
+        }. Looking forward to my appointment!`
       );
 
       window.location.href = `https://wa.me/${CLINIC_WHATSAPP}?text=${message}`;
@@ -97,6 +154,61 @@ export default function BookingForm() {
         {service.name}
       </h2>
       <p className="text-charcoal/50 text-sm mb-6">{service.duration}</p>
+
+      <div className="mb-6">
+        <label className="block text-sm text-charcoal/70 mb-1">
+          Appointment Date
+        </label>
+        <input
+          type="date"
+          min={getTodayString()}
+          value={selectedDate}
+          onChange={(e) => setSelectedDate(e.target.value)}
+          className="w-full border border-nude rounded-lg px-4 py-2.5 text-charcoal"
+        />
+        {isSunday(selectedDate) && (
+          <p className="text-red-500 text-sm mt-2">
+            We're closed on Sundays — please pick Mon–Sat.
+          </p>
+        )}
+      </div>
+
+      {selectedDate && !isSunday(selectedDate) && (
+        <div className="mb-6">
+          <label className="block text-sm text-charcoal/70 mb-2">
+            Appointment Time
+          </label>
+          {loadingSlots ? (
+            <p className="text-charcoal/50 text-sm">
+              Checking availability...
+            </p>
+          ) : (
+            <div className="grid grid-cols-4 gap-2">
+              {TIME_SLOTS.map((slot) => {
+                const isBooked = bookedSlots.includes(slot);
+                const isSelected = selectedTime === slot;
+                return (
+                  <button
+                    key={slot}
+                    type="button"
+                    disabled={isBooked}
+                    onClick={() => setSelectedTime(slot)}
+                    className={`py-2 rounded-lg text-xs font-medium border transition ${
+                      isBooked
+                        ? "bg-nude/40 text-charcoal/30 border-nude cursor-not-allowed line-through"
+                        : isSelected
+                        ? "bg-rose text-white border-rose"
+                        : "border-nude text-charcoal/70 hover:border-rose"
+                    }`}
+                  >
+                    {slot}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
 
       <div className="grid grid-cols-2 gap-3 mb-6">
         <button
@@ -177,7 +289,7 @@ export default function BookingForm() {
           disabled
           className="w-full bg-nude text-charcoal/40 font-medium py-3 rounded-lg cursor-not-allowed"
         >
-          Fill in your name, email, and number to continue
+          Complete all fields, including date &amp; time, to continue
         </button>
       )}
 
