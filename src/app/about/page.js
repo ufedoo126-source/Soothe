@@ -22,7 +22,7 @@ export default function AboutPage() {
         <div className="grid md:grid-cols-2 gap-14 items-center mb-24">
           <div className="relative aspect-square rounded-3xl bg-nude overflow-hidden">
             <div className="absolute inset-0 flex items-center justify-center text-charcoal/30 text-sm text-center px-6">
-              Dr Semi's photo 
+            <img src="/about/dr.semi.jpeg" alt="Dr Semi's photo" className="w-full h-full object-cover" />
             </div>
           </div>
           <div>
@@ -30,8 +30,21 @@ export default function AboutPage() {
               Meet Dr Semi
             </h2>
             <p className="text-charcoal/70 leading-relaxed mb-4">
-              [credentials, qualifications, years of
-              experience, and philosophy on skincare and aesthetics.]
+              Where science meets aesthetics.
+
+Soothe Aesthetics is a Lagos based aesthetic clinic dedicated to helping clients achieve healthier, clearer and more confident skin through personalised, evidence informed aesthetic care.
+
+We specialise in the treatment and management of concerns including acne, hyperpigmentation, acne scarring, uneven skin tone, melasma, signs of ageing and overall skin health
+
+Our approach is centred around understanding each client's skin before recommending treatment. Rather than following a one-size-fits-all approach, we combine professional assessment, targeted treatments and tailored home-care recommendations to create realistic, sustainable results.
+
+Soothe Aesthetics was created to provide a modern, thoughtful approach to aesthetic care, one that prioritises skin health, safety and long-term results
+
+Our Philosophy
+
+Understand the skin. Treat the concern. Protect the skin.
+
+At Soothe Aesthetics, we believe beautiful skin starts with healthy skin, and every treatment should be designed with that principle in mind.
             </p>
             <p className="text-charcoal/70 leading-relaxed">
               Every treatment at Soothe begins with a thorough consultation,
