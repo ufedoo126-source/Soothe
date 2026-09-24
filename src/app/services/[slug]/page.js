@@ -1,15 +1,16 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
-import { getServiceBySlug, getAllServicesFlat } from "@/lib/services";
+import { getServiceBySlug, getAllServiceSlugs, formatPrice } from "@/lib/services";
 
-export function generateStaticParams() {
-  return getAllServicesFlat().map((item) => ({ slug: item.slug }));
+export async function generateStaticParams() {
+  const slugs = await getAllServiceSlugs();
+  return slugs.map((slug) => ({ slug }));
 }
 
 export async function generateMetadata({ params }) {
   const { slug } = await params;
-  const service = getServiceBySlug(slug);
+  const service = await getServiceBySlug(slug);
   if (!service) return {};
   return {
     title: `${service.name} | Soothe Aesthetics Clinic`,
@@ -18,7 +19,7 @@ export async function generateMetadata({ params }) {
 
 export default async function ServiceDetailPage({ params }) {
   const { slug } = await params;
-  const service = getServiceBySlug(slug);
+  const service = await getServiceBySlug(slug);
 
   if (!service) {
     notFound();
@@ -36,7 +37,7 @@ export default async function ServiceDetailPage({ params }) {
         </Link>
 
         <p className="text-rose text-sm tracking-[0.2em] uppercase mb-3">
-          {service.category}
+          {service.categoryName}
         </p>
         <h1 className="font-script text-4xl md:text-5xl text-charcoal mb-6">
           {service.name}
@@ -53,7 +54,7 @@ export default async function ServiceDetailPage({ params }) {
             <p className="text-charcoal/50 text-xs uppercase tracking-wide mb-1">
               Price
             </p>
-            <p className="text-rose font-medium">{service.price}</p>
+            <p className="text-rose font-medium">{formatPrice(service.price)}</p>
           </div>
         </div>
 

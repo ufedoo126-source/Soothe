@@ -4,8 +4,9 @@ import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import dynamic from "next/dynamic";
-import { getServiceBySlug, priceToNumber } from "@/lib/services";
 import { supabase } from "@/lib/supabaseClient";
+import { formatPrice } from "@/lib/services";
+import BookingPolicy from "./BookingPolicy";
 
 const BookingPayButton = dynamic(() => import("./BookingPayButton"), {
   ssr: false,
@@ -14,7 +15,6 @@ const BookingPayButton = dynamic(() => import("./BookingPayButton"), {
 const CLINIC_WHATSAPP = "2349114624762";
 
 const TIME_SLOTS = [
-  "9:00 AM",
   "10:00 AM",
   "11:00 AM",
   "12:00 PM",
@@ -39,7 +39,9 @@ function isSunday(dateString) {
 export default function BookingForm() {
   const searchParams = useSearchParams();
   const slug = searchParams.get("service");
-  const service = slug ? getServiceBySlug(slug) : null;
+
+  const [service, setService] = useState(null);
+  const [loadingService, setLoadingService] = useState(true);
 
   const [paymentType, setPaymentType] = useState("full");
   const [name, setName] = useState("");
@@ -49,7 +51,30 @@ export default function BookingForm() {
   const [selectedTime, setSelectedTime] = useState("");
   const [bookedSlots, setBookedSlots] = useState([]);
   const [loadingSlots, setLoadingSlots] = useState(false);
+  const [policyAgreed, setPolicyAgreed] = useState(false);
   const [status, setStatus] = useState("idle"); // idle | verifying | verified | failed
+
+  useEffect(() => {
+    if (!slug) {
+      setLoadingService(false);
+      return;
+    }
+
+    async function fetchService() {
+      const { data, error } = await supabase
+        .from("services")
+        .select("*, service_categories(name)")
+        .eq("slug", slug)
+        .single();
+
+      if (!error && data) {
+        setService({ ...data, categoryName: data.service_categories?.name });
+      }
+      setLoadingService(false);
+    }
+
+    fetchService();
+  }, [slug]);
 
   useEffect(() => {
     if (!selectedDate || isSunday(selectedDate)) {
@@ -74,6 +99,14 @@ export default function BookingForm() {
     fetchBookedSlots();
   }, [selectedDate]);
 
+  if (loadingService) {
+    return (
+      <div className="text-center bg-white border border-nude rounded-2xl p-8">
+        <p className="text-charcoal/50">Loading...</p>
+      </div>
+    );
+  }
+
   if (!service) {
     return (
       <div className="text-center bg-white border border-nude rounded-2xl p-8">
@@ -91,7 +124,7 @@ export default function BookingForm() {
     );
   }
 
-  const fullPrice = priceToNumber(service.price);
+  const fullPrice = service.price;
   const amount =
     paymentType === "deposit" ? Math.round(fullPrice * 0.5) : fullPrice;
   const canPay =
@@ -100,7 +133,8 @@ export default function BookingForm() {
     /^\S+@\S+\.\S+$/.test(email.trim()) &&
     selectedDate &&
     selectedTime &&
-    !isSunday(selectedDate);
+    !isSunday(selectedDate) &&
+    policyAgreed;
 
   async function handlePaySuccess(reference) {
     setStatus("verifying");
@@ -132,7 +166,7 @@ export default function BookingForm() {
       setStatus("verified");
 
       const message = encodeURIComponent(
-        `Hi Dr Semilore, I just paid ₦${amount.toLocaleString()} (${
+        `Hi Dr Semilore, I just paid ${formatPrice(amount)} (${
           paymentType === "deposit" ? "50% deposit" : "full payment"
         }) for ${service.name} on ${selectedDate} at ${selectedTime}. My name is ${name}, phone ${phone}. Payment ref: ${
           reference.reference
@@ -148,7 +182,7 @@ export default function BookingForm() {
   return (
     <div className="bg-white border border-nude rounded-2xl p-6 md:p-8">
       <p className="text-rose text-sm tracking-[0.2em] uppercase mb-2">
-        {service.category}
+        {service.categoryName}
       </p>
       <h2 className="text-2xl text-charcoal font-medium mb-1">
         {service.name}
@@ -221,7 +255,8 @@ export default function BookingForm() {
           }`}
         >
           Full Payment
-          <br />₦{fullPrice.toLocaleString()}
+          <br />
+          {formatPrice(fullPrice)}
         </button>
         <button
           type="button"
@@ -233,7 +268,8 @@ export default function BookingForm() {
           }`}
         >
           50% Deposit
-          <br />₦{Math.round(fullPrice * 0.5).toLocaleString()}
+          <br />
+          {formatPrice(Math.round(fullPrice * 0.5))}
         </button>
       </div>
 
@@ -276,6 +312,20 @@ export default function BookingForm() {
         </div>
       </div>
 
+      <BookingPolicy />
+
+      <label className="flex items-start gap-2 mb-6 cursor-pointer">
+        <input
+          type="checkbox"
+          checked={policyAgreed}
+          onChange={(e) => setPolicyAgreed(e.target.checked)}
+          className="mt-1"
+        />
+        <span className="text-sm text-charcoal/70">
+          I have read and agree to the booking policy above.
+        </span>
+      </label>
+
       {canPay ? (
         <BookingPayButton
           amount={amount}
@@ -289,7 +339,7 @@ export default function BookingForm() {
           disabled
           className="w-full bg-nude text-charcoal/40 font-medium py-3 rounded-lg cursor-not-allowed"
         >
-          Complete all fields, including date &amp; time, to continue
+          Complete all fields and agree to the policy to continue
         </button>
       )}
 

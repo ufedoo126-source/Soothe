@@ -2,17 +2,16 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
-import { SERVICE_CATEGORIES, getCategoryBySlug, slugify } from "@/lib/services";
+import { getCategoryBySlug, getAllCategorySlugs, formatPrice } from "@/lib/services";
 
-export function generateStaticParams() {
-  return SERVICE_CATEGORIES.map((category) => ({
-    slug: slugify(category.name),
-  }));
+export async function generateStaticParams() {
+  const slugs = await getAllCategorySlugs();
+  return slugs.map((slug) => ({ slug }));
 }
 
 export async function generateMetadata({ params }) {
   const { slug } = await params;
-  const category = getCategoryBySlug(slug);
+  const category = await getCategoryBySlug(slug);
   if (!category) return {};
   return {
     title: `${category.name} | Soothe Aesthetics Clinic`,
@@ -21,7 +20,7 @@ export async function generateMetadata({ params }) {
 
 export default async function CategoryPage({ params }) {
   const { slug } = await params;
-  const category = getCategoryBySlug(slug);
+  const category = await getCategoryBySlug(slug);
 
   if (!category) {
     notFound();
@@ -38,10 +37,10 @@ export default async function CategoryPage({ params }) {
           Back to all categories
         </Link>
 
-        {category.image && (
+        {category.image_url && (
           <div className="relative w-full h-64 md:h-80 rounded-2xl overflow-hidden mb-8">
             <Image
-              src={category.image}
+              src={category.image_url}
               alt={category.name}
               fill
               className="object-cover"
@@ -54,15 +53,15 @@ export default async function CategoryPage({ params }) {
         </h1>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          {category.items.map((item) => (
+          {category.services.map((item) => (
             <Link
-              key={item.name}
-              href={`/services/${slugify(item.name)}`}
+              key={item.id}
+              href={`/services/${item.slug}`}
               className="block bg-white border border-nude rounded-2xl p-5 hover:shadow-md hover:border-rose/40 transition"
             >
               <p className="text-charcoal font-medium mb-1">{item.name}</p>
               <p className="text-charcoal/50 text-sm mb-3">{item.duration}</p>
-              <p className="text-rose font-medium">{item.price}</p>
+              <p className="text-rose font-medium">{formatPrice(item.price)}</p>
             </Link>
           ))}
         </div>
