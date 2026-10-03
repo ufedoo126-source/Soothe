@@ -224,7 +224,7 @@ export default function ServicesExplorer({ sections }) {
               <a
                 key={s.id}
                 href={`#${s.slug}`}
-                className="text-sm border border-nude bg-white rounded-full px-4 py-1.5 text-charcoal/70 hover:border-rose hover:text-rose transition"
+                className="text-sm font-semibold border-2 border-[#B0386B]/40 bg-white rounded-full px-4 py-1.5 text-black hover:bg-[#B0386B] hover:border-[#B0386B] hover:text-white transition"
               >
                 {s.name}
               </a>
