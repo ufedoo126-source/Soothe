@@ -12,7 +12,9 @@ const BookingPayButton = dynamic(() => import("./BookingPayButton"), {
   ssr: false,
 });
 
-const CLINIC_WHATSAPP = "2349114624762";
+const CLINIC_EMAIL = "soothebylore@gmail.com";
+const CLINIC_ADDRESS =
+  "33 Okugade Okunneye Street, Mende, Maryland, Lagos";
 
 const TIME_SLOTS = [
   "9:00 AM",
@@ -37,12 +39,23 @@ function isSunday(dateString) {
   return date.getDay() === 0;
 }
 
+function prettyDate(dateString) {
+  if (!dateString) return "";
+  return new Date(dateString + "T00:00:00").toLocaleDateString("en-GB", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+}
+
 export default function BookingForm() {
   const searchParams = useSearchParams();
   const slug = searchParams.get("service");
 
   const [service, setService] = useState(null);
   const [loadingService, setLoadingService] = useState(true);
+  const [consultSlug, setConsultSlug] = useState(null);
 
   const [paymentType, setPaymentType] = useState("full");
   const [name, setName] = useState("");
@@ -53,6 +66,7 @@ export default function BookingForm() {
   const [bookedSlots, setBookedSlots] = useState([]);
   const [loadingSlots, setLoadingSlots] = useState(false);
   const [policyAgreed, setPolicyAgreed] = useState(false);
+  const [paymentRef, setPaymentRef] = useState("");
   const [status, setStatus] = useState("idle"); // idle | verifying | verified | failed
 
   useEffect(() => {
@@ -76,6 +90,25 @@ export default function BookingForm() {
 
     fetchService();
   }, [slug]);
+
+  // For consultation-only services, find the first consultation to send people to
+  useEffect(() => {
+    if (!service || service.bookable !== false) return;
+
+    async function fetchConsultation() {
+      const { data } = await supabase
+        .from("services")
+        .select("slug, service_categories!inner(slug)")
+        .eq("service_categories.slug", "start-here")
+        .order("sort_order")
+        .limit(1)
+        .maybeSingle();
+
+      if (data) setConsultSlug(data.slug);
+    }
+
+    fetchConsultation();
+  }, [service]);
 
   useEffect(() => {
     if (!selectedDate || isSunday(selectedDate)) {
@@ -125,6 +158,31 @@ export default function BookingForm() {
     );
   }
 
+  // Services that are arranged after a consultation (kits, memberships, medical-level)
+  if (service.bookable === false) {
+    return (
+      <div className="text-center bg-white border border-nude rounded-2xl p-8">
+        <p className="text-rose text-sm tracking-[0.2em] uppercase mb-2">
+          {service.categoryName}
+        </p>
+        <h2 className="text-2xl text-charcoal font-medium mb-4">
+          {service.name}
+        </h2>
+        <p className="text-charcoal/70 mb-6">
+          This is arranged after a consultation, so that we can confirm it is
+          right for your skin, tone and health. Book a consultation first and
+          your written plan will cover it.
+        </p>
+        <Link
+          href={consultSlug ? `/book?service=${consultSlug}` : "/services"}
+          className="inline-block bg-rose hover:bg-blush text-white font-medium px-6 py-2.5 rounded-full transition"
+        >
+          {consultSlug ? "Book a consultation" : "Back to services"}
+        </Link>
+      </div>
+    );
+  }
+
   const fullPrice = service.price;
   const amount =
     paymentType === "deposit" ? Math.round(fullPrice * 0.5) : fullPrice;
@@ -138,6 +196,7 @@ export default function BookingForm() {
     policyAgreed;
 
   async function handlePaySuccess(reference) {
+    setPaymentRef(reference.reference);
     setStatus("verifying");
 
     try {
@@ -165,19 +224,96 @@ export default function BookingForm() {
       }
 
       setStatus("verified");
-
-      const message = encodeURIComponent(
-        `Hi Dr Semilore, I just paid ${formatPrice(amount)} (${
-          paymentType === "deposit" ? "50% deposit" : "full payment"
-        }) for ${service.name} on ${selectedDate} at ${selectedTime}. My name is ${name}, phone ${phone}. Payment ref: ${
-          reference.reference
-        }. Looking forward to my appointment!`
-      );
-
-      window.location.href = `https://wa.me/${CLINIC_WHATSAPP}?text=${message}`;
+      window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (err) {
       setStatus("failed");
     }
+  }
+
+  // CONFIRMATION SCREEN (replaces the form after a verified payment)
+  if (status === "verified") {
+    return (
+      <div className="bg-white border border-nude rounded-2xl p-6 md:p-8 text-center">
+        <p className="text-rose text-sm tracking-[0.2em] uppercase mb-2">
+          Booking confirmed
+        </p>
+        <h2 className="font-script text-3xl text-black mb-2">
+          Thank you, {name.split(" ")[0]}
+        </h2>
+        <p className="text-charcoal/70 mb-6">
+          Your appointment is booked. A confirmation email is on its way to{" "}
+          {email}.
+        </p>
+
+        <div className="text-left bg-ivory border border-nude rounded-xl p-5 mb-6 space-y-2 text-sm">
+          <div className="flex justify-between gap-4">
+            <span className="text-charcoal/60">Treatment</span>
+            <span className="text-black font-medium text-right">
+              {service.name}
+            </span>
+          </div>
+          <div className="flex justify-between gap-4">
+            <span className="text-charcoal/60">Date</span>
+            <span className="text-black font-medium text-right">
+              {prettyDate(selectedDate)}
+            </span>
+          </div>
+          <div className="flex justify-between gap-4">
+            <span className="text-charcoal/60">Time</span>
+            <span className="text-black font-medium text-right">
+              {selectedTime}
+            </span>
+          </div>
+          <div className="flex justify-between gap-4">
+            <span className="text-charcoal/60">
+              {paymentType === "deposit" ? "Deposit paid" : "Amount paid"}
+            </span>
+            <span className="text-[#B0386B] font-bold text-right">
+              {formatPrice(amount)}
+            </span>
+          </div>
+          {paymentType === "deposit" && (
+            <div className="flex justify-between gap-4">
+              <span className="text-charcoal/60">Balance remaining</span>
+              <span className="text-black font-medium text-right">
+                {formatPrice(fullPrice - amount)}
+              </span>
+            </div>
+          )}
+          <div className="flex justify-between gap-4">
+            <span className="text-charcoal/60">Payment reference</span>
+            <span className="text-black font-medium text-right break-all">
+              {paymentRef}
+            </span>
+          </div>
+        </div>
+
+        <p className="text-charcoal/70 text-sm mb-1">
+          Please arrive 5-10 minutes early; late arrival may shorten your
+          treatment.
+        </p>
+        <p className="text-charcoal/70 text-sm mb-1">{CLINIC_ADDRESS}</p>
+        <p className="text-charcoal/70 text-sm mb-6">
+          We will contact you on {phone} if anything about your appointment
+          needs to change.
+        </p>
+
+        <div className="flex flex-col sm:flex-row gap-3 justify-center">
+          <Link
+            href="/"
+            className="bg-rose hover:bg-blush text-white font-medium px-6 py-2.5 rounded-full transition"
+          >
+            Back to home
+          </Link>
+          <Link
+            href="/services"
+            className="border border-rose text-rose hover:bg-rose hover:text-white font-medium px-6 py-2.5 rounded-full transition"
+          >
+            Browse more services
+          </Link>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -203,7 +339,7 @@ export default function BookingForm() {
         />
         {isSunday(selectedDate) && (
           <p className="text-red-500 text-sm mt-2">
-            We're closed on Sundays — please pick Mon–Sat.
+            We are closed on Sundays, please pick Mon-Sat.
           </p>
         )}
       </div>
@@ -301,7 +437,7 @@ export default function BookingForm() {
         </div>
         <div>
           <label className="block text-sm text-charcoal/70 mb-1">
-            WhatsApp Number
+            Phone Number
           </label>
           <input
             type="tel"
@@ -352,14 +488,9 @@ export default function BookingForm() {
 
       {status === "failed" && (
         <p className="text-center text-sm text-red-500 mt-4">
-          We couldn't confirm this payment. If you were charged, please
-          contact us on WhatsApp directly with your payment reference.
-        </p>
-      )}
-
-      {status === "verified" && (
-        <p className="text-center text-sm text-charcoal/60 mt-4">
-          Payment confirmed — redirecting you to WhatsApp...
+          We could not confirm this payment. If you were charged, please email{" "}
+          {CLINIC_EMAIL} with your payment reference ({paymentRef}) and we
+          will sort it out.
         </p>
       )}
     </div>

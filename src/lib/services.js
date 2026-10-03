@@ -16,6 +16,8 @@ export async function getAllCategories() {
   const { data: categories, error } = await supabase
     .from("service_categories")
     .select("*, services(count)")
+    .eq("visible", true)
+    .order("sort_order")
     .order("name");
 
   if (error || !categories) {
@@ -26,6 +28,33 @@ export async function getAllCategories() {
   return categories.map((cat) => ({
     ...cat,
     itemCount: cat.services?.[0]?.count ?? 0,
+  }));
+}
+
+// Every visible category with all of its services, in menu order.
+// Used by the /services page.
+export async function getMenuSections() {
+  const { data, error } = await supabase
+    .from("service_categories")
+    .select("*, services(*)")
+    .eq("visible", true)
+    .order("sort_order")
+    .order("name");
+
+  if (error || !data) {
+    console.error("getMenuSections error:", error);
+    return [];
+  }
+
+  return data.map((cat) => ({
+    ...cat,
+    services: (cat.services || [])
+      .slice()
+      .sort(
+        (a, b) =>
+          (a.sort_order ?? 0) - (b.sort_order ?? 0) ||
+          a.name.localeCompare(b.name)
+      ),
   }));
 }
 
@@ -50,6 +79,7 @@ export async function getCategoryBySlug(slug) {
     .from("services")
     .select("*")
     .eq("category_id", category.id)
+    .order("sort_order")
     .order("name");
 
   return { ...category, services: services || [] };

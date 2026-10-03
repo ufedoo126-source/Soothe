@@ -122,7 +122,7 @@ export async function POST(request) {
               <td style="padding: 8px 0; text-align: right; font-size: 12px;">${reference}</td>
             </tr>
           </table>
-          <p>Dr Semilore will confirm your appointment with you on WhatsApp shortly.</p>
+          <p>Please present this receipt when you arrive for your appointment, and arrive 5-10 minutes early.</p>
           <p style="color: #999; font-size: 13px; margin-top: 30px;">Soothe Aesthetics Clinic — 33 Okugade Okunneye Street, Mende, Maryland, Lagos</p>
         </div>
       `,
