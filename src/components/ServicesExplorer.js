@@ -99,17 +99,33 @@ export default function ServicesExplorer({ sections }) {
   const [stage, setStage] = useState(0);
   const consultRef = useRef(null);
   const othersRef = useRef(null);
+  const hashTarget = useRef(null);
 
   const consultations = sections.find((s) => s.slug === "start-here");
   const others = sections.filter((s) => s.slug !== "start-here");
   const consultSlug = consultations?.services?.[0]?.slug;
 
+  // If someone arrives via a link like /services#microneedling-menu,
+  // open the full list and remember which section they wanted.
+  useEffect(() => {
+    const hash = window.location.hash.replace("#", "");
+    if (hash) {
+      hashTarget.current = hash;
+      setStage(2);
+    }
+  }, []);
+
   useEffect(() => {
     if (stage === 1 && consultRef.current) {
       consultRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
     }
-    if (stage === 2 && othersRef.current) {
-      othersRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+    if (stage === 2) {
+      const target = hashTarget.current
+        ? document.getElementById(hashTarget.current)
+        : null;
+      const el = target || othersRef.current;
+      if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+      hashTarget.current = null;
     }
   }, [stage]);
 
